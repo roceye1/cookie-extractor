@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  test:
+    name: Firefox dry-run (Ubuntu)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pycryptodome requests pytest
+
+      - name: Install Firefox
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends firefox
+
+      - name: Seed a Firefox profile with test cookies
+        run: |
+          python tests/seed_firefox_cookies.py
+
+      - name: Run tests
+        run: |
+          pytest tests/ -v --tb=short
