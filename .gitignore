@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pkl
+cookies_*.json
+cookies_*.txt
+cookies_*.hdr
+cookies_*.playwright.json
+.DS_Store
