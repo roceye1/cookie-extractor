@@ -68,3 +68,29 @@ jobs:
 
       - name: Run Chrome tests
         run: pytest tests/test_chrome.py -v --tb=short
+
+  # ── Safari BinaryCookies dry-run ─────────────────────────────────────────────
+  test-safari:
+    name: Safari dry-run (macOS)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pycryptodome requests pytest
+
+      - name: Seed Safari BinaryCookies file
+        run: python tests/seed_safari_cookies.py
+
+      - name: Run Safari tests
+        run: pytest tests/test_safari.py -v --tb=short
