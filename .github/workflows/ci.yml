@@ -7,7 +7,8 @@ on:
     branches: ["**"]
 
 jobs:
-  test:
+  # ── Firefox dry-run ──────────────────────────────────────────────────────────
+  test-firefox:
     name: Firefox dry-run (Ubuntu)
     runs-on: ubuntu-latest
 
@@ -31,10 +32,39 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends firefox
 
-      - name: Seed a Firefox profile with test cookies
-        run: |
-          python tests/seed_firefox_cookies.py
+      - name: Seed Firefox profile with test cookies
+        run: python tests/seed_firefox_cookies.py
 
-      - name: Run tests
+      - name: Run Firefox tests
+        run: pytest tests/test_firefox.py -v --tb=short
+
+  # ── Chrome / Chromium dry-run ────────────────────────────────────────────────
+  test-chrome:
+    name: Chrome dry-run (Ubuntu)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
         run: |
-          pytest tests/ -v --tb=short
+          python -m pip install --upgrade pip
+          pip install pycryptodome requests pytest
+
+      - name: Install Chromium
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends chromium-browser
+
+      - name: Seed Chromium profile with test cookies
+        run: python tests/seed_chrome_cookies.py
+
+      - name: Run Chrome tests
+        run: pytest tests/test_chrome.py -v --tb=short
