@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cookie Extractor</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #171614;
+      --surface:     #1C1B19;
+      --surface-alt: #242320;
+      --border:      #393836;
+      --text:        #CDCCCA;
+      --text-muted:  #797876;
+      --text-faint:  #5A5957;
+      --accent:      #4F98A3;
+      --accent-hover:#227F8B;
+      --success:     #6DAA45;
+      --error:       #D163A7;
+      --warning:     #BB653B;
+      --radius:      6px;
+      --font: -apple-system, "Segoe UI", system-ui, sans-serif;
+      --mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+    }
+
+    body {
+      width: 460px;
+      min-height: 200px;
+      max-height: 600px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      line-height: 1.5;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ────────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .header-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .header-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .domain-badge {
+      font-size: 11px;
+      color: var(--accent);
+      background: rgba(79,152,163,0.12);
+      border: 1px solid rgba(79,152,163,0.25);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-family: var(--mono);
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Tabs ──────────────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      padding: 0 14px;
+      gap: 2px;
+    }
+
+    .tab {
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      user-select: none;
+    }
+
+    .tab:hover { color: var(--text); }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ── Toolbar ───────────────────────────────────────────────────────── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-alt);
+    }
+
+    .search {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 5px 9px;
+      color: var(--text);
+      font-size: 12px;
+      font-family: var(--font);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search::placeholder { color: var(--text-faint); }
+    .search:focus { border-color: var(--accent); }
+
+    .count-badge {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--border);
+      border-radius: 10px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius);
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border-color: var(--border);
+    }
+
+    .btn-ghost:hover { color: var(--text); border-color: var(--text-muted); }
+
+    /* ── Tab panels ────────────────────────────────────────────────────── */
+    .panels {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .panel {
+      display: none;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .panel.active { display: block; }
+
+    /* ── Cookie list ───────────────────────────────────────────────────── */
+    .cookie-list {
+      padding: 6px 0;
+    }
+
+    .cookie-item {
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .cookie-item:last-child { border-bottom: none; }
+    .cookie-item:hover { background: var(--surface-alt); }
+    .cookie-item.selected { background: rgba(79,152,163,0.08); }
+
+    .cookie-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cookie-name {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .cookie-value {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .cookie-flags {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .flag {
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+
+    .flag-secure   { background: rgba(79,152,163,0.15); color: var(--accent); }
+    .flag-httponly { background: rgba(109,170,69,0.15);  color: var(--success); }
+    .flag-session  { background: rgba(186,101,59,0.15);  color: var(--warning); }
+
+    .cookie-meta {
+      margin-top: 3px;
+      font-size: 11px;
+      color: var(--text-faint);
+      font-family: var(--mono);
+    }
+
+    /* ── Export panel ──────────────────────────────────────────────────── */
+    .export-panel {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .format-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .format-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-alt);
+    }
+
+    .format-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .format-desc {
+      font-size: 11px;
+      color: var(--text-faint);
+      margin-left: 8px;
+    }
+
+    .format-actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .code-block {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 10px 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 90px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    /* ── Raw JSON panel ────────────────────────────────────────────────── */
+    .raw-panel {
+      padding: 10px 14px;
+    }
+
+    .raw-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .raw-code {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      white-space: pre;
+      overflow: auto;
+      max-height: 380px;
+      line-height: 1.6;
+    }
+
+    /* ── States ────────────────────────────────────────────────────────── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      color: var(--text-faint);
+      text-align: center;
+      gap: 8px;
+    }
+
+    .empty-icon { font-size: 32px; }
+
+    .empty-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .empty-sub { font-size: 12px; }
+
+    /* ── Toast ─────────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--accent);
+      color: #fff;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 999;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── Scrollbar ─────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <span class="header-icon">🍪</span>
+    <span class="header-title">Cookie Extractor</span>
+    <span class="domain-badge" id="domain-badge">loading…</span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="cookies">Cookies</div>
+    <div class="tab" data-tab="export">Export</div>
+    <div class="tab" data-tab="raw">Raw JSON</div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input type="text" class="search" id="search" placeholder="Filter by name or value…" />
+    <span class="count-badge" id="count-badge">0 cookies</span>
+    <button class="btn btn-primary" id="btn-refresh" title="Re-fetch cookies">↺ Refresh</button>
+  </div>
+
+  <!-- Panels -->
+  <div class="panels">
+
+    <!-- Cookies tab -->
+    <div class="panel active" id="panel-cookies">
+      <div id="cookie-list" class="cookie-list"></div>
+    </div>
+
+    <!-- Export tab -->
+    <div class="panel" id="panel-export">
+      <div class="export-panel" id="export-panel"></div>
+    </div>
+
+    <!-- Raw JSON tab -->
+    <div class="panel" id="panel-raw">
+      <div class="raw-panel">
+        <div class="raw-toolbar">
+          <button class="btn btn-ghost" id="btn-copy-raw">Copy JSON</button>
+          <button class="btn btn-primary" id="btn-download-json">⬇ Download</button>
+        </div>
+        <pre class="raw-code" id="raw-code">[]</pre>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#5FADB8"/>
+      <stop offset="100%" stop-color="#1C6B73"/>
+    </radialGradient>
+  </defs>
+  <!-- background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#bg)"/>
+  <!-- cookie body -->
+  <circle cx="64" cy="64" r="38" fill="#F5DEB3" stroke="#D4A85A" stroke-width="3"/>
+  <!-- chocolate chips -->
+  <ellipse cx="54" cy="52" rx="6" ry="5.5" fill="#5C3A1E" transform="rotate(-10,54,52)"/>
+  <ellipse cx="76" cy="58" rx="5.5" ry="5" fill="#5C3A1E" transform="rotate(15,76,58)"/>
+  <ellipse cx="58" cy="74" rx="5" ry="5.5" fill="#5C3A1E" transform="rotate(-5,58,74)"/>
+  <ellipse cx="75" cy="75" rx="4.5" ry="4" fill="#5C3A1E" transform="rotate(20,75,75)"/>
+  <!-- bite mark -->
+  <path d="M93 48 Q108 34 110 52 Q112 68 98 72" fill="#1C6B73"/>
+  <!-- crack lines -->
+  <path d="M64 26 Q66 38 62 50" fill="none" stroke="#D4A85A" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M45 60 Q55 63 52 73" fill="none" stroke="#D4A85A" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
